@@ -1,0 +1,18 @@
+:root { font-family: Inter, system-ui, Arial, sans-serif; color: #102016; background: #f3f7f1; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button { cursor: pointer; border: 0; border-radius: 12px; padding: 11px 14px; background: #14532d; color: white; font-weight: 700; display: inline-flex; gap: 8px; align-items: center; justify-content: center; }
+button.secondary, .link-button { background: white; color: #14532d; border: 1px solid #cbd5c0; }
+input, select { width: 100%; padding: 11px; border-radius: 12px; border: 1px solid #cbd5c0; margin: 6px 0 12px; font-size: 16px; }
+h1 { margin: 0; font-size: 30px; } h2 { display: flex; gap: 8px; align-items: center; margin-top: 0; }
+.auth-card { max-width: 440px; margin: 8vh auto; background: white; padding: 28px; border-radius: 24px; box-shadow: 0 12px 35px #0001; }
+.app { max-width: 1100px; margin: 0 auto; padding: 24px; }
+header { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 24px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 18px; margin-bottom: 18px; }
+.card { background: white; border-radius: 24px; padding: 20px; box-shadow: 0 10px 30px #0000000d; border: 1px solid #e6eadf; }
+.notice, .message { background: #fff7d6; padding: 12px; border-radius: 12px; }
+table { width: 100%; border-collapse: collapse; } th, td { text-align: left; padding: 12px; border-bottom: 1px solid #edf0e8; }
+.match { border: 1px solid #edf0e8; border-radius: 14px; padding: 12px; margin: 10px 0; display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+.pending { color: #a16207; } .confirmed { color: #15803d; }
+.match-form label { font-weight: 700; }
+@media (max-width: 640px) { header { flex-direction: column; align-items: stretch; } }
