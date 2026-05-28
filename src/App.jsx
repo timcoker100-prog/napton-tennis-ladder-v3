@@ -403,26 +403,7 @@ return (
         timcoker100@gmail.com
       </p>
 
-      <button
-        className="link-button"
-        onClick={() => {
-          const enteredCode = prompt('Enter admin code')
-
-          if (enteredCode === 'ADMIN2026') {
-            setIsAdmin(true)
-            setLoggedInPlayer({
-              id: 'admin',
-              name: 'Administrator',
-              email: 'admin',
-            })
-            setPage('admin')
-          } else {
-            alert('Incorrect admin code.')
-          }
-        }}
-      >
-        Admin
-      </button>
+      
     </div>
   </>
 )}
