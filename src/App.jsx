@@ -25,6 +25,7 @@ const [showWhatsapp, setShowWhatsapp] = useState(false)
 const [password, setPassword] = useState('')
 const [loginPassword, setLoginPassword] = useState('')
 const [resetEmail, setResetEmail] = useState('')
+const [selectedPlayersToDelete, setSelectedPlayersToDelete] = useState([])
   
 
   async function loadPlayers() {
@@ -51,7 +52,20 @@ const [resetEmail, setResetEmail] = useState('')
   }, [])
 
   async function addPlayer() {
-    if (!name || !email) return
+    if (!name.trim()) {
+  alert('Please enter your name.')
+  return
+}
+
+if (!email.trim()) {
+  alert('Please enter your email address.')
+  return
+}
+
+if (!password.trim()) {
+  alert('Please create a password.')
+  return
+}
    if (!password) {
   alert('Please create a password.')
   return
@@ -88,9 +102,15 @@ show_whatsapp: showWhatsapp,
   .select()
 
     if (error) {
-      alert('That email address is already being used.')
-      return
-    }
+
+  if (error.message.includes('duplicate')) {
+    alert('That email address is already being used.')
+  } else {
+    alert(error.message)
+  }
+
+  return
+}
 const newPlayer = data?.[0]
 
 if (newPlayer) {
@@ -102,6 +122,15 @@ if (newPlayer) {
     loadPlayers()
   }
 function loginPlayer() {
+  if (!loginEmail.trim()) {
+  alert('Please enter your email address.')
+  return
+}
+
+if (!loginPassword.trim()) {
+  alert('Please enter your password.')
+  return
+}
   const foundPlayer = players.find(
     (player) =>
       String(player.email || '').toLowerCase() === loginEmail.toLowerCase() &&
@@ -277,39 +306,123 @@ async function deletePlayer(playerId) {
 
   await loadPlayers()
   await loadMatches()
-  window.location.reload()
+  setPage('ladder')
 }
+async function updateMyDetails() {
+  if (!loggedInPlayer || loggedInPlayer.id === 'admin') {
+    alert('Only a registered player can update their own details.')
+    return
+  }
 
+  const { error } = await supabase
+    .from('players')
+    .update({
+      phone,
+      whatsapp,
+      show_email: showEmail,
+      show_phone: showPhone,
+      show_whatsapp: showWhatsapp,
+      password,
+    })
+    .eq('id', loggedInPlayer.id)
+
+  if (error) {
+    alert(error.message)
+    return
+  }
+
+  alert('Your details have been updated.')
+
+  await loadPlayers()
+
+  setLoggedInPlayer({
+    ...loggedInPlayer,
+    phone,
+    whatsapp,
+    show_email: showEmail,
+    show_phone: showPhone,
+    show_whatsapp: showWhatsapp,
+    password,
+  })
+}
+async function deleteSelectedPlayers() {
+  if (!isAdmin) return
+
+  if (selectedPlayersToDelete.length === 0) {
+    alert('Please select at least one player to delete.')
+    return
+  }
+
+  const confirmed = window.confirm(
+    'Delete selected players and all their related matches?'
+  )
+
+  if (!confirmed) return
+
+  for (const playerId of selectedPlayersToDelete) {
+    await deletePlayer(playerId)
+  }
+
+  setSelectedPlayersToDelete([])
+  alert('Selected players deleted.')
+}
 return (
     <div className="container">
       <h1>Napton Tennis Ladder</h1>
      {!loggedInPlayer && page === 'login' && (
   <>
-      <div className="login-box">
-  <input
-    value={loginEmail}
-   
-    onChange={(e) => setLoginEmail(e.target.value)}
-    placeholder="Enter your registered email"
-  />
-  <input
-    type="password"
-    value={loginPassword}
-    onChange={(e) => setLoginPassword(e.target.value)}
-    placeholder="Enter your password"
-  />
-  <button onClick={loginPlayer}>Log in</button>
-  <button onClick={() => setPage('register')}>
-  Not registered? Register here
-</button>
-<button onClick={() => setPage('forgot')}>
-  Forgot password?
-</button>
+    <div className="login-box">
+      <h2>Log In</h2>
 
-<button onClick={() => setPage('instructions')}>
-  Instructions
-</button>
-</div>
+      <input
+        value={loginEmail}
+        onChange={(e) => setLoginEmail(e.target.value)}
+        placeholder="Email address"
+      />
+
+      <input
+        type="password"
+        value={loginPassword}
+        onChange={(e) => setLoginPassword(e.target.value)}
+        placeholder="Password"
+      />
+
+      <button onClick={loginPlayer}>Log In</button>
+
+      <button className="link-button" onClick={() => setPage('register')}>
+        If you have not registered yet, click here
+      </button>
+
+      <button className="link-button" onClick={() => setPage('instructions')}>
+        Instructions
+      </button>
+
+      <p>
+        If you have forgotten your password, please contact the administrator:
+        timcoker100@gmail.com
+      </p>
+
+      <button
+        className="link-button"
+        onClick={() => {
+          const enteredCode = prompt('Enter admin code')
+
+          if (enteredCode === 'ADMIN2026') {
+            setIsAdmin(true)
+            setLoggedInPlayer({
+              id: 'admin',
+              name: 'Administrator',
+              email: 'admin',
+            })
+            setPage('admin')
+          } else {
+            alert('Incorrect admin code.')
+          }
+        }}
+      >
+        Admin
+      </button>
+    </div>
   </>
 )}
 {page === 'forgot' && (
@@ -326,27 +439,69 @@ return (
       Contact the ladder administrator and ask for your password to be reset.
     </p>
 
-    <button onClick={() => setPage('login')}>
-      Back to Login
-    </button>
+    <button className="link-button" onClick={() => setPage('login')}>
+  Back to Login
+</button>
   </div>
 )}
- {page === 'instructions' && (
+{page === 'instructions' && (
   <div className="card">
-    <h2>How to Use the Ladder</h2>
-
-    <p>Register with your name, email and password.</p>
-    <p>Phone and WhatsApp are optional.</p>
-    <p>Your contact details are only visible if you tick the consent boxes.</p>
-    <p>You must log in before you can see the ladder or submit results.</p>
-    <p>You can only submit a match result if you are one of the two players.</p>
-    <p>The winner and loser receive an email after the result is submitted.</p>
-    <p>Administrator contact: timcoker100@gmail.com
-</p>
-
-    <button onClick={() => setPage('login')}>
-      Back to Login
+    <button
+      className="link-button"
+      onClick={() => setPage('login')}
+    >
+      Back
     </button>
+
+    <h2>Instructions</h2>
+
+    <p>
+      Welcome to the Napton Tennis Ladder.
+    </p>
+
+    <p>
+      1. Register using your name, email address and password.
+    </p>
+
+    <p>
+      2. Optional phone and WhatsApp details can be shared with other registered players.
+    </p>
+
+    <p>
+      3. If you choose not to share any contact details, other players may find it difficult to contact you.
+    </p>
+
+    <p>
+      4. Once logged in, you can:
+    </p>
+
+    <ul>
+      <li>View the ladder rankings</li>
+      <li>Submit match results</li>
+      <li>View player contact details</li>
+      <li>Edit your own contact details</li>
+      <li>Change your own password</li>
+    </ul>
+    <p>
+      5. Only your own contact details and password can be edited.
+    </p>
+    <p>
+      6. Match results are submitted on a separate page accessed from the ladder page.
+    </p>
+    <p>
+      7. The system automatically logs out after 5 minutes of inactivity.
+    </p>
+    <p>
+      8. If you forget your password, contact the ladder administrator timcoker100@gmail.com.
+    </p>
+   <button
+  className="link-button"
+  onClick={() => setPage('login')}
+>
+  Back to Login
+</button>
+
+   
   </div>
 )}
 
@@ -429,7 +584,7 @@ return (
 <button className="register-button" onClick={addPlayer}>
   Register
 </button>
-<button onClick={() => setPage('login')}>
+<button className="link-button" onClick={() => setPage('login')}>
   Back to Login
 </button>
       </div>
@@ -438,6 +593,7 @@ return (
 
 {loggedInPlayer && (
   <>
+
   <div className="logged-in-bar">
   <p>Logged in as {loggedInPlayer.name}</p>
 
@@ -452,39 +608,51 @@ return (
   >
     Log out
   </button>
-</div>
-  <div className="logged-in-bar">
-  <p>Logged in as {loggedInPlayer.name}</p>
 
-  <button
-    className="logout-button"
-    onClick={() => {
-      setLoggedInPlayer(null)
-      setLoginEmail('')
-      setLoginPassword('')
-      setPage('login')
-    }}
-  >
-    Log out
+  <button onClick={() => setPage('submit')}>
+    Submit Match Result
   </button>
- {isAdmin && (
-  <div className="card">
-    <h2>Admin Dashboard</h2>
-    <p>Total players: {players.length}</p>
-    <p>Total matches: {matches.length}</p>
-    <p>
-      Admin can delete players using the Delete buttons in the ladder table.
-    </p>
-  </div>
-)}
+
+  <button onClick={() => setPage('contacts')}>
+    Player Contacts
+  </button>
+
+  <button onClick={() => setPage('ladder')}>
+    Ladder
+  </button>
+
+  {isAdmin && (
+    <div className="card">
+      <h2>Admin Dashboard</h2>
+
+      <p>Total players: {players.length}</p>
+
+      <p>Total matches: {matches.length}</p>
+
+      <p>
+        Admin can delete players using the Delete buttons in the ladder table.
+      </p>
+    </div>
+  )}
 </div>
-      <div className="match-form">
+
+     {page === 'submit' && (
+  <div className="match-form">
+
+    <button
+      className="link-button"
+      onClick={() => setPage('ladder')}
+    >
+      Back
+    </button>
         <h2>Submit Match Result</h2>
 
         <select value={player1Id} onChange={(e) => setPlayer1Id(e.target.value)}>
           <option value="">Player 1</option>
           {players.map((player) => (
-            <option key={player.id} value={player.id}>{player.name}</option>
+            <option key={player.id} value={player.id}>
+  {player.name} - Played {player.played}, Points {player.points}
+</option>
           ))}
         </select>
 
@@ -493,7 +661,9 @@ return (
         <select value={player2Id} onChange={(e) => setPlayer2Id(e.target.value)}>
           <option value="">Player 2</option>
           {players.map((player) => (
-            <option key={player.id} value={player.id}>{player.name}</option>
+            <option key={player.id} value={player.id}>
+  {player.name} - Played {player.played}, Points {player.points}
+</option>
           ))}
         </select>
 
@@ -501,8 +671,22 @@ return (
 
         <button onClick={submitMatch}>Submit Match</button>
       </div>
+    
+)}
+      {page === 'ladder' && (
+  <>
+      <button onClick={() => setPage('submit')}>
+  Submit Match Result
+</button>
+     
 
-      <table>
+    {isAdmin && (
+      <button onClick={deleteSelectedPlayers}>
+        Delete Selected Players
+      </button>
+    )}
+
+    <table>
         <thead>
           <tr>
             <th>Rank</th>
@@ -528,6 +712,19 @@ return (
               <td>{player.points}</td>
               {isAdmin && (
   <td>
+   <input
+  type="checkbox"
+  checked={selectedPlayersToDelete.includes(player.id)}
+  onChange={(e) => {
+    if (e.target.checked) {
+      setSelectedPlayersToDelete([...selectedPlayersToDelete, player.id])
+    } else {
+      setSelectedPlayersToDelete(
+        selectedPlayersToDelete.filter((id) => id !== player.id)
+      )
+    }
+  }}
+/>
     <button onClick={() => deletePlayer(player.id)}>
       Delete
     </button>
@@ -537,9 +734,78 @@ return (
           ))}
        </tbody>
 </table>
+  </>
+)}
+{page === 'contacts' && (
+  <div className="card">
 
+    <button
+      className="link-button"
+      onClick={() => setPage('ladder')}
+    >
+      Back
+    </button>
 <h2>Player Contacts</h2>
+<p>
+  This page shows player contact details where players have agreed to share them.
+  You can edit only your own contact details and password.
+</p>
 
+{loggedInPlayer && loggedInPlayer.id !== 'admin' && (
+  <div className="card">
+    <h3>Edit My Details</h3>
+
+    <input
+      value={phone}
+      onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+      placeholder="Phone number"
+    />
+
+    <input
+      value={whatsapp}
+      onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ''))}
+      placeholder="WhatsApp number"
+    />
+
+    <input
+      type="password"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      placeholder="New password"
+    />
+
+    <div className="consent-row">
+      <input
+        type="checkbox"
+        checked={showEmail}
+        onChange={(e) => setShowEmail(e.target.checked)}
+      />
+      <span>Share my email with registered players</span>
+    </div>
+
+    <div className="consent-row">
+      <input
+        type="checkbox"
+        checked={showPhone}
+        onChange={(e) => setShowPhone(e.target.checked)}
+      />
+      <span>Share my phone number with registered players</span>
+    </div>
+
+    <div className="consent-row">
+      <input
+        type="checkbox"
+        checked={showWhatsapp}
+        onChange={(e) => setShowWhatsapp(e.target.checked)}
+      />
+      <span>Share my WhatsApp number with registered players</span>
+    </div>
+
+    <button onClick={updateMyDetails}>
+      Update My Details
+    </button>
+  </div>
+)}
 <table>
   <thead>
     <tr>
@@ -589,35 +855,10 @@ return (
   </tbody>
 </table>
 
-<h2>Match History</h2>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Player 1</th>
-            <th>Score</th>
-            <th>Player 2</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {matches.map((match) => {
-           const player1 = players.find((p) => p.id === match.player_a)
-const player2 = players.find((p) => p.id === match.player_b)
-
-            return (
-              <tr key={match.id}>
-                <td>{player1?.name || 'Unknown'}</td>
-                <td>{match.player_a_games} - {match.player_b_games}</td>
-                <td>{player2?.name || 'Unknown'}</td>
-                <td>{new Date().toLocaleDateString()}</td>
-                
-                </tr>
-            )
-          })}
-        </tbody>
-      </table>
+  
+      </div>
+)}
         </>
 )}
     </div>
