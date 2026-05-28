@@ -243,6 +243,7 @@ const loserScore = player1Won ? p2Score : p1Score
   await loadPlayers()
 await loadMatches()
 
+setPage('ladder')
 setTimeout(() => {
   loadPlayers()
   loadMatches()
