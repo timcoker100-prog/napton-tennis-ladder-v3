@@ -71,13 +71,13 @@ if (!password.trim()) {
   return
 }
 
-if (phone && !/^\d+$/.test(phone)) {
-  alert('Phone number must contain numbers only.')
+if (phone && !isValidInternationalNumber(phone)) {
+  alert('Please enter your phone number with country code, for example +447927315429.')
   return
 }
 
-if (whatsapp && !/^\d+$/.test(whatsapp)) {
-  alert('WhatsApp number must contain numbers only.')
+if (whatsapp && !isValidInternationalNumber(whatsapp)) {
+  alert('Please enter your WhatsApp number with country code, for example +447927315429.')
   return
 }
 
@@ -367,6 +367,18 @@ async function deleteSelectedPlayers() {
   setSelectedPlayersToDelete([])
   alert('Selected players deleted.')
 }
+function cleanInternationalNumber(value) {
+  return String(value || '').replace(/[^\d+]/g, '')
+}
+
+function isValidInternationalNumber(value) {
+  if (!value) return true
+  return /^\+\d{8,15}$/.test(value)
+}
+
+function numberForWhatsapp(value) {
+  return String(value || '').replace(/\D/g, '')
+}
 return (
     <div className="container">
       <h1>Napton Tennis Ladder</h1>
@@ -437,45 +449,32 @@ return (
 
     <h2>Instructions</h2>
 
-    <p>
-      Welcome to the Napton Tennis Ladder.
-    </p>
+   1. Register with your name, email address and password.
 
-    <p>
-      1. Register using your name, email address and password.
-    </p>
+2. Phone number and WhatsApp number are optional. If you choose to provide them, please include the international dialling code (for example +44 for the UK).
 
-    <p>
-      2. Optional phone and WhatsApp details can be shared with other registered players.
-    </p>
+3. You can choose whether your email address, phone number and WhatsApp number are visible to other registered players. If you choose not to share any contact details, other players may find it difficult to arrange matches with you.
 
-    <p>
-      3. If you choose not to share any contact details, other players may find it difficult to contact you.
-    </p>
+4. Use the Contacts page to find opponents and contact them to arrange a match.
 
-    <p>
-      4. Once logged in, you can:
-    </p>
+5. Each ladder match consists of 15 games. Every game won earns one ladder point. For example, a score of 9–6 awards 9 ladder points to the winner and 6 ladder points to the loser.
 
-    <ul>
-      <li>View the ladder rankings</li>
-      <li>Submit match results</li>
-      <li>View player contact details</li>
-      <li>Edit your own contact details</li>
-      <li>Change your own password</li>
-    </ul>
-    <p>
-      5. Only your own contact details and password can be edited.
-    </p>
-    <p>
-      6. Match results are submitted on a separate page accessed from the ladder page.
-    </p>
-    <p>
-      7. The system automatically logs out after 5 minutes of inactivity.
-    </p>
-    <p>
-      8. If you forget your password, contact the ladder administrator timcoker100@gmail.com.
-    </p>
+6. Your ladder ranking is based on the total number of ladder points you have accumulated.
+
+7. You may only submit one ladder match against any particular opponent. You are welcome to play the same opponent again socially, but additional matches against the same opponent cannot be entered into the ladder.
+
+8. After a match has been played, either player may submit the result using the Submit Match Result page.
+
+9. Once a result has been submitted, both players will receive an email confirming the recorded score.
+
+10. The History page shows all ladder matches played, including player names, match date and score.
+
+11. Only your own contact details and password can be edited.
+
+12. The system automatically logs out after 5 minutes of inactivity.
+
+13. If you forget your password, please contact the ladder administrator. timcoker100@gmail.com
+
    <button
   className="link-button"
   onClick={() => setPage('login')}
@@ -528,13 +527,13 @@ return (
 />
 <input
   value={phone}
-  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-  placeholder="Phone number (optional)"
+  onChange={(e) => setPhone(cleanInternationalNumber(e.target.value))}
+  placeholder="+44 phone number optional"
 />
 <input
   value={whatsapp}
-  onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ''))}
-  placeholder="WhatsApp number (optional)"
+  onChange={(e) => setWhatsapp(cleanInternationalNumber(e.target.value))}
+  placeholder="+44 phone number optional"
 />
   <div className="consent-row">
   <input
@@ -657,6 +656,9 @@ return (
 )}
       {page === 'ladder' && (
   <>
+     <button onClick={() => setPage('history')}>
+  Match History
+</button>
       <button onClick={() => setPage('submit')}>
   Submit Match Result
 </button>
@@ -718,7 +720,48 @@ return (
 </table>
   </>
 )}
+
+{page === 'history' && (
+  <div className="card">
+    <button className="link-button" onClick={() => setPage('ladder')}>
+      Back
+    </button>
+
+    <h2>Match History</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Player 1</th>
+          <th>Player 2</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {matches.map((match) => {
+          const player1 = players.find((p) => p.id === match.player_a)
+          const player2 = players.find((p) => p.id === match.player_b)
+
+          return (
+            <tr key={match.id}>
+              <td>{new Date(match.created_at).toLocaleDateString('en-GB')}</td>
+              <td>{player1?.name || 'Unknown'}</td>
+              <td>{player2?.name || 'Unknown'}</td>
+              <td>
+                {match.player_a_games} - {match.player_b_games}
+              </td>
+            </tr>
+          )
+        })}
+      </tbody>
+    </table>
+  </div>
+)}
+
 {page === 'contacts' && (
+
   <div className="card">
 
     <button
@@ -822,7 +865,7 @@ return (
         <td>
           {player.show_whatsapp && player.whatsapp ? (
             <a
-              href={`https://wa.me/${player.whatsapp}`}
+              href={`https://wa.me/${numberForWhatsapp(player.whatsapp)}`}
               target="_blank"
               rel="noreferrer"
             >
