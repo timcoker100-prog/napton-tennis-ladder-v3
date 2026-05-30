@@ -19,9 +19,9 @@ const [loggedInPlayer, setLoggedInPlayer] = useState(null)
 const [page, setPage] = useState('login')
 const [phone, setPhone] = useState('')
 const [whatsapp, setWhatsapp] = useState('')
-const [showEmail, setShowEmail] = useState(false)
-const [showPhone, setShowPhone] = useState(false)
-const [showWhatsapp, setShowWhatsapp] = useState(false)
+const [showEmail, setShowEmail] = useState(true)
+const [showPhone, setShowPhone] = useState(true)
+const [showWhatsapp, setShowWhatsapp] = useState(true)
 const [password, setPassword] = useState('')
 const [loginPassword, setLoginPassword] = useState('')
 const [resetEmail, setResetEmail] = useState('')
@@ -729,12 +729,7 @@ Administrator: timcoker100@gmail.com
       Back
     </button>
         <h2>Submit Match Result</h2>
-<button
-  className="link-button"
-  onClick={() => setPage('instructions')}
->
-  Need Help? Read Instructions
-</button>
+
         <select value={player1Id} onChange={(e) => setPlayer1Id(e.target.value)}>
           <option value="">Player 1</option>
           {players.map((player) => (
@@ -766,9 +761,7 @@ Administrator: timcoker100@gmail.com
      <button onClick={() => setPage('history')}>
   Match History
 </button>
-<button onClick={() => setPage('instructions')}>
-  Need Help? Read Instructions
-</button>      
+    
      
 
     {isAdmin && (
