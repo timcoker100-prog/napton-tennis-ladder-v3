@@ -45,7 +45,41 @@ const [selectedPlayersToDelete, setSelectedPlayersToDelete] = useState([])
 
     setMatches(data || [])
   }
+async function recalculatePlayerStats() {
+  const { data: allPlayers } = await supabase.from('players').select('*')
+  const { data: allMatches } = await supabase.from('matches').select('*')
 
+  for (const player of allPlayers || []) {
+    const playerMatches = (allMatches || []).filter(
+      (m) => m.player_a === player.id || m.player_b === player.id
+    )
+
+    let played = 0
+    let won = 0
+    let lost = 0
+    let points = 0
+
+    for (const match of playerMatches) {
+      const isA = match.player_a === player.id
+      const myGames = isA ? match.player_a_games : match.player_b_games
+      const oppGames = isA ? match.player_b_games : match.player_a_games
+
+      played += 1
+      points += Number(myGames)
+
+      if (myGames > oppGames) won += 1
+      if (myGames < oppGames) lost += 1
+    }
+
+    await supabase
+      .from('players')
+      .update({ played, won, lost, points })
+      .eq('id', player.id)
+  }
+
+  await loadPlayers()
+  await loadMatches()
+}
   useEffect(() => {
     loadPlayers()
     loadMatches()
@@ -192,58 +226,51 @@ const existingMatch = matches.find(
     (match.player_a === player2Id && match.player_b === player1Id)
 )
 
+const player1 = players.find((p) => p.id === player1Id)
+const player2 = players.find((p) => p.id === player2Id)
+
+const player1Won = p1Score > p2Score
+const player2Won = p2Score > p1Score
+
+let matchError = null
+
 if (existingMatch) {
-  alert('These two players have already played each other.')
-  return
+  const confirmed = window.confirm(
+    'These two players already have a result. Do you want to replace the old result with this corrected result?'
+  )
+
+  if (!confirmed) return
+
+  const player1WasA = existingMatch.player_a === player1Id
+
+  const { error } = await supabase
+    .from('matches')
+    .update({
+      player_a_games: player1WasA ? p1Score : p2Score,
+      player_b_games: player1WasA ? p2Score : p1Score,
+      status: 'confirmed',
+    })
+    .eq('id', existingMatch.id)
+
+  matchError = error
+} else {
+  const { error } = await supabase.from('matches').insert([
+    {
+      player_a: player1Id,
+      player_b: player2Id,
+      player_a_games: p1Score,
+      player_b_games: p2Score,
+      status: 'confirmed',
+    },
+  ])
+
+  matchError = error
 }
-    const player1 = players.find((p) => p.id === player1Id)
-    const player2 = players.find((p) => p.id === player2Id)
-
-    const player1Won = p1Score > p2Score
-    const player2Won = p2Score > p1Score
-
- const { error: matchError } = await supabase.from('matches').insert([
-  {
-       player_a: player1Id,
-    player_b: player2Id,
-    player_a_games: p1Score,
-    player_b_games: p2Score,
-    status: 'confirmed',
-  },
-])
 if (matchError) {
   alert(matchError.message)
   return
 }
-const { error: player1Error } = await supabase
-  .from('players')
-  .update({
-    played: player1.played + 1,
-    won: player1.won + (player1Won ? 1 : 0),
-    lost: player1.lost + (player2Won ? 1 : 0),
-    points: player1.points + p1Score,
-  })
-  .eq('id', player1Id)
-
-if (player1Error) {
-  alert(player1Error.message)
-  return
-}
-
-const { error: player2Error } = await supabase
-  .from('players')
-  .update({
-    played: player2.played + 1,
-    won: player2.won + (player2Won ? 1 : 0),
-    lost: player2.lost + (player1Won ? 1 : 0),
-    points: player2.points + p2Score,
-  })
-  .eq('id', player2Id)
-
-if (player2Error) {
-  alert(player2Error.message)
-  return
-}
+await recalculatePlayerStats()
     
 
     setPlayer1Id('')
