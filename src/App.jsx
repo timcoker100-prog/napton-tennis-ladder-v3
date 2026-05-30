@@ -52,75 +52,92 @@ const [selectedPlayersToDelete, setSelectedPlayersToDelete] = useState([])
   }, [])
 
   async function addPlayer() {
-    if (!name.trim()) {
-  alert('Please enter your name.')
-  return
-}
+   
+  alert('Register button clicked')
 
-if (!email.trim()) {
-  alert('Please enter your email address.')
-  return
-}
-
-if (!password.trim()) {
-  alert('Please create a password.')
-  return
-}
-   if (!password) {
-  alert('Please create a password.')
-  return
-}
-
-if (phone && !isValidInternationalNumber(phone)) {
-  alert('Please enter your phone number with country code, for example +447927315429.')
-  return
-}
-
-if (whatsapp && !isValidInternationalNumber(whatsapp)) {
-  alert('Please enter your WhatsApp number with country code, for example +447927315429.')
-  return
-}
-
-    const { data, error } = await supabase
-  .from('players')
-  .insert([
-    {
-      name,
-      email,
-      password,
-      phone,
-whatsapp,
-show_email: showEmail,
-show_phone: showPhone,
-show_whatsapp: showWhatsapp,
-      played: 0,
-      won: 0,
-      lost: 0,
-      points: 0,
-    },
-  ])
-  .select()
-
-    if (error) {
-
-  if (error.message.includes('duplicate')) {
-    alert('That email address is already being used.')
-  } else {
-    alert(error.message)
+  if (!name.trim()) {
+    alert('Please enter your name.')
+    return
   }
 
-  return
-}
-const newPlayer = data?.[0]
+  if (!email.trim()) {
+    alert('Please enter your email address.')
+    return
+  }
 
-if (newPlayer) {
+  if (!password.trim()) {
+    alert('Please create a password.')
+    return
+  }
+
+  if (phone && !isValidInternationalNumber(phone)) {
+    alert('Please enter your phone number with country code, for example +447927315429.')
+    return
+  }
+
+  if (whatsapp && !isValidInternationalNumber(whatsapp)) {
+    alert('Please enter your WhatsApp number with country code, for example +447927315429.')
+    return
+  }
+
+  const existingPlayer = players.find(
+    (player) =>
+      String(player.email || '').toLowerCase() === email.trim().toLowerCase()
+  )
+
+  if (existingPlayer) {
+    alert('That email address is already registered.')
+    return
+  }
+
+  const { data, error } = await supabase
+    .from('players')
+    .insert([
+      {
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        phone,
+        whatsapp,
+        show_email: showEmail,
+        show_phone: showPhone,
+        show_whatsapp: showWhatsapp,
+        played: 0,
+        won: 0,
+        lost: 0,
+        points: 0,
+      },
+    ])
+    .select()
+
+  if (error) {
+    alert('Registration failed: ' + error.message)
+    return
+  }
+
+  const newPlayer = data?.[0]
+
+  if (!newPlayer) {
+    alert('Registration failed. No player was returned from the database.')
+    return
+  }
+
   setLoggedInPlayer(newPlayer)
-}
+  setPage('ladder')
 
-    setName('')
-    setEmail('')
-    loadPlayers()
-  }
+  setName('')
+  setEmail('')
+  setPassword('')
+  setPhone('')
+  setWhatsapp('')
+  setShowEmail(false)
+  setShowPhone(false)
+  setShowWhatsapp(false)
+
+  await loadPlayers()
+
+  alert('Registration successful. You are now logged in.')
+}
 function loginPlayer() {
   if (!loginEmail.trim()) {
   alert('Please enter your email address.')
@@ -243,36 +260,40 @@ const loserScore = player1Won ? p2Score : p1Score
   await loadPlayers()
 await loadMatches()
 
-setPage('ladder')
 setTimeout(() => {
   loadPlayers()
   loadMatches()
 }, 500)
-const emailResponse = await fetch(
-  'https://fblxqfzzgbxtaswedstv.supabase.co/functions/v1/quick-worker',
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-    },
-    body: JSON.stringify({
-      winnerEmail: winner.email,
-      loserEmail: loser.email,
-      winnerName: winner.name,
-      loserName: loser.name,
-      winnerScore,
-      loserScore,
-    }),
-  }
-)
+try {
+  alert('About to send email')
 
-const emailData = await emailResponse.json()
-console.log(emailData)
+  const emailResponse = await fetch(
+    'https://fblxqfzzgbxtaswedstv.supabase.co/functions/v1/quick-worker',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        winnerEmail: winner.email,
+        loserEmail: loser.email,
+        winnerName: winner.name,
+        loserName: loser.name,
+        winnerScore,
+        loserScore,
+      }),
+    }
+  )
 
-console.log(emailData)
+  alert('Fetch completed')
 
+  const emailText = await emailResponse.text()
+  alert('Email response: ' + emailText)
+} catch (err) {
+  alert('EMAIL ERROR: ' + err.message)
+}
 
+setPage('ladder')
 }
 
 async function deletePlayer(playerId) {
@@ -449,31 +470,108 @@ return (
 
     <h2>Instructions</h2>
 
-   1. Register with your name, email address and password.
+   <ul style={{ textAlign: 'left', lineHeight: '1.8' }}>
 
-2. Phone number and WhatsApp number are optional. If you choose to provide them, please include the international dialling code (for example +44 for the UK).
+<li>
+<strong>Register an Account</strong>
+<ul>
+<li>Register using your name, email address and password.</li>
+<li>Phone and WhatsApp numbers are optional.</li>
+<li>If you provide a phone or WhatsApp number, please include the international dialling code (for example +44 for the UK).</li>
+</ul>
+</li>
 
-3. You can choose whether your email address, phone number and WhatsApp number are visible to other registered players. If you choose not to share any contact details, other players may find it difficult to arrange matches with you.
+<li>
+<strong>Choose What Contact Details to Share</strong>
+<ul>
+<li>You can decide whether your email address, phone number and WhatsApp number are visible to other players.</li>
+<li>Sharing contact details makes it easier for other players to arrange matches with you.</li>
+</ul>
+</li>
 
-4. Use the Contacts page to find opponents and contact them to arrange a match.
+<li>
+<strong>Find an Opponent</strong>
+<ul>
+<li>Use the Player Contacts page to find other players.</li>
+<li>Contact them directly to arrange a match.</li>
+</ul>
+</li>
 
-5. Each ladder match consists of 15 games. Every game won earns one ladder point. For example, a score of 9–6 awards 9 ladder points to the winner and 6 ladder points to the loser.
+<li>
+<strong>Play a Ladder Match</strong>
+<ul>
+<li>Each ladder match consists of 15 games.</li>
+<li>Every game won earns one ladder point.</li>
+<li>For example, a score of 9–6 awards 9 ladder points to one player and 6 ladder points to the other.</li>
+</ul>
+</li>
 
-6. Your ladder ranking is based on the total number of ladder points you have accumulated.
+<li>
+<strong>Submit the Result</strong>
+<ul>
+<li>After the match, either player may submit the score using the Submit Match Result page.</li>
+<li>You may only submit a result for a match that involves you.</li>
+</ul>
+</li>
 
-7. You may only submit one ladder match against any particular opponent. You are welcome to play the same opponent again socially, but additional matches against the same opponent cannot be entered into the ladder.
+<li>
+<strong>One Match Per Opponent</strong>
+<ul>
+<li>For ladder purposes, you can only play each opponent once.</li>
+<li>You are welcome to play additional friendly matches, but these cannot be entered into the ladder.</li>
+</ul>
+</li>
 
-8. After a match has been played, either player may submit the result using the Submit Match Result page.
+<li>
+<strong>Email Confirmation</strong>
+<ul>
+<li>Once a result has been submitted, both players should check the Match History page to confirm the result has been recorded correctly</li>
+</ul>
+</li>
 
-9. Once a result has been submitted, both players will receive an email confirming the recorded score.
+<li>
+<strong>View the Ladder</strong>
+<ul>
+<li>Rankings are based on the total number of ladder points accumulated.</li>
+<li>The player with the most ladder points is ranked highest.</li>
+</ul>
+</li>
 
-10. The History page shows all ladder matches played, including player names, match date and score.
+<li>
+<strong>View Match History</strong>
+<ul>
+<li>The Match History page shows all ladder matches played.</li>
+<li>It includes the date played, player names and match score.</li>
+</ul>
+</li>
 
-11. Only your own contact details and password can be edited.
+<li>
+<strong>Edit Your Details</strong>
+<ul>
+<li>You can update your own contact details and password at any time.</li>
+<li>You cannot edit another player's details.</li>
+</ul>
+</li>
 
-12. The system automatically logs out after 5 minutes of inactivity.
+<li>
+<strong>Automatic Logout</strong>
+<ul>
+<li>For security, the system automatically logs out after 5 minutes of inactivity.</li>
+</ul>
+</li>
 
-13. If you forget your password, please contact the ladder administrator. timcoker100@gmail.com
+<li>
+<strong>Forgotten Passwords</strong>
+<ul>
+<li>If you forget your password, please contact the ladder administrator.</li>
+</ul>
+</li>
+
+</ul>
+
+<p>
+Administrator: timcoker100@gmail.com
+</p>
 
    <button
   className="link-button"
@@ -659,9 +757,7 @@ return (
      <button onClick={() => setPage('history')}>
   Match History
 </button>
-      <button onClick={() => setPage('submit')}>
-  Submit Match Result
-</button>
+      
      
 
     {isAdmin && (
