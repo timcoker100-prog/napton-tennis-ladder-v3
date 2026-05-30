@@ -235,7 +235,16 @@ const player2Won = p2Score > p1Score
 let matchError = null
 
 if (existingMatch) {
-  const confirmed = window.confirm(
+  const playerInMatch =
+  existingMatch.player_a === loggedInPlayer.id ||
+  existingMatch.player_b === loggedInPlayer.id
+
+if (!playerInMatch && !isAdmin) {
+  alert(
+    'Only the two players involved in this match, or the administrator, can correct the result.'
+  )
+  return
+}const confirmed = window.confirm(
     'These two players already have a result. Do you want to replace the old result with this corrected result?'
   )
 
@@ -539,7 +548,19 @@ return (
 <li>You may only submit a result for a match that involves you.</li>
 </ul>
 </li>
+<h3>Correcting a Match Result</h3>
 
+<p>
+If a result has been entered incorrectly, either of the two players involved
+(or the administrator) may submit the result again using the correct score.
+The system will detect that the match already exists and will offer to replace
+the previous result.
+</p>
+
+<p>
+When a result is corrected, all ladder statistics and points are automatically
+recalculated so that no duplicate points are awarded.
+</p>
 <li>
 <strong>One Match Per Opponent</strong>
 <ul>
@@ -756,7 +777,12 @@ Administrator: timcoker100@gmail.com
       Back
     </button>
         <h2>Submit Match Result</h2>
-
+<p className="info-note">
+  If a result has already been entered for these two players, either player
+  involved (or the administrator) may submit a corrected score. The old
+  result will be replaced and the ladder points will automatically be
+  recalculated.
+</p>
         <select value={player1Id} onChange={(e) => setPlayer1Id(e.target.value)}>
           <option value="">Player 1</option>
           {players.map((player) => (
