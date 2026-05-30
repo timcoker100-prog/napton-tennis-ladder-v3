@@ -622,15 +622,16 @@ Administrator: timcoker100@gmail.com
   onChange={(e) => setPassword(e.target.value)}
   placeholder="Create password"
 />
-<input
+ <input
   value={phone}
   onChange={(e) => setPhone(cleanInternationalNumber(e.target.value))}
-  placeholder="+44 phone number optional"
+  placeholder="+44 Phone Number (optional)"
 />
+
 <input
   value={whatsapp}
   onChange={(e) => setWhatsapp(cleanInternationalNumber(e.target.value))}
-  placeholder="+44 phone number optional"
+  placeholder="+44 WhatsApp Number (optional)"
 />
   <div className="consent-row">
   <input
@@ -886,17 +887,20 @@ Administrator: timcoker100@gmail.com
   <div className="card">
     <h3>Edit My Details</h3>
 
-    <input
-      value={phone}
-      onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-      placeholder="Phone number"
-    />
+    <label>Phone Number</label>
+<input
+  value={phone}
+  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+  placeholder="Phone Number"
+/>
 
-    <input
-      value={whatsapp}
-      onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ''))}
-      placeholder="WhatsApp number"
-    />
+<label>WhatsApp Number</label>
+<input
+  value={whatsapp}
+  onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ''))}
+  placeholder="WhatsApp Number"
+/>
+
 
     <input
       type="password"
