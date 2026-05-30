@@ -236,15 +236,17 @@ let matchError = null
 
 if (existingMatch) {
   const playerInMatch =
-  existingMatch.player_a === loggedInPlayer.id ||
-  existingMatch.player_b === loggedInPlayer.id
+    existingMatch.player_a === loggedInPlayer.id ||
+    existingMatch.player_b === loggedInPlayer.id
 
-if (!playerInMatch && !isAdmin) {
-  alert(
-    'Only the two players involved in this match, or the administrator, can correct the result.'
-  )
-  return
-}const confirmed = window.confirm(
+  if (!playerInMatch && !isAdmin) {
+    alert(
+      'Only the two players involved in this match, or the administrator, can correct the result.'
+    )
+    return
+  }
+
+  const confirmed = window.confirm(
     'These two players already have a result. Do you want to replace the old result with this corrected result?'
   )
 
