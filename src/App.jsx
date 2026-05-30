@@ -330,7 +330,28 @@ try {
 
 setPage('ladder')
 }
+async function deleteMatch(matchId) {
+  if (!isAdmin) return
 
+  const confirmed = window.confirm(
+    'Delete this match result and recalculate the ladder?'
+  )
+
+  if (!confirmed) return
+
+  const { error } = await supabase
+    .from('matches')
+    .delete()
+    .eq('id', matchId)
+
+  if (error) {
+    alert(error.message)
+    return
+  }
+
+  await recalculatePlayerStats()
+  alert('Match deleted and ladder recalculated.')
+}
 async function deletePlayer(playerId) {
   if (!isAdmin) return
   alert('Delete function started for ' + playerId)
@@ -884,13 +905,14 @@ Administrator: timcoker100@gmail.com
 
     <table>
       <thead>
-        <tr>
-          <th>Date</th>
-          <th>Player 1</th>
-          <th>Player 2</th>
-          <th>Score</th>
-        </tr>
-      </thead>
+  <tr>
+    <th>Date</th>
+    <th>Player 1</th>
+    <th>Player 2</th>
+    <th>Score</th>
+    <th>Actions</th>
+  </tr>
+</thead>
 
       <tbody>
         {matches.map((match) => {
@@ -903,8 +925,16 @@ Administrator: timcoker100@gmail.com
               <td>{player1?.name || 'Unknown'}</td>
               <td>{player2?.name || 'Unknown'}</td>
               <td>
-                {match.player_a_games} - {match.player_b_games}
-              </td>
+  {match.player_a_games} - {match.player_b_games}
+</td>
+
+<td>
+  {isAdmin && (
+    <button onClick={() => deleteMatch(match.id)}>
+      Delete
+    </button>
+  )}
+</td>
             </tr>
           )
         })}
