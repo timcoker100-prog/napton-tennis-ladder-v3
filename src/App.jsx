@@ -288,8 +288,7 @@ try {
   alert('Fetch completed')
 
   const emailText = await emailResponse.text()
-  alert('Email response: ' + emailText)
-} catch (err) {
+  } catch (err) {
   alert('EMAIL ERROR: ' + err.message)
 }
 
@@ -700,6 +699,10 @@ Administrator: timcoker100@gmail.com
     Ladder
   </button>
 
+  <button onClick={() => setPage('instructions')}>
+  Instructions
+</button>
+
   {isAdmin && (
     <div className="card">
       <h2>Admin Dashboard</h2>
@@ -725,7 +728,12 @@ Administrator: timcoker100@gmail.com
       Back
     </button>
         <h2>Submit Match Result</h2>
-
+<button
+  className="link-button"
+  onClick={() => setPage('instructions')}
+>
+  Need Help? Read Instructions
+</button>
         <select value={player1Id} onChange={(e) => setPlayer1Id(e.target.value)}>
           <option value="">Player 1</option>
           {players.map((player) => (
@@ -757,7 +765,9 @@ Administrator: timcoker100@gmail.com
      <button onClick={() => setPage('history')}>
   Match History
 </button>
-      
+<button onClick={() => setPage('instructions')}>
+  Need Help? Read Instructions
+</button>      
      
 
     {isAdmin && (
