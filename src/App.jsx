@@ -354,6 +354,35 @@ async function deleteMatch(matchId) {
   await recalculatePlayerStats()
   alert('Match deleted and ladder recalculated.')
 }
+function makeTempPassword() {
+  return 'Tennis' + Math.floor(100000 + Math.random() * 900000)
+}
+
+async function resetPlayerPassword(player) {
+  if (!isAdmin) return
+
+  const tempPassword = makeTempPassword()
+
+  const confirmed = window.confirm(
+    `Reset password for ${player.name} and create a temporary password?`
+  )
+
+  if (!confirmed) return
+
+  const { error } = await supabase
+    .from('players')
+    .update({ password: tempPassword })
+    .eq('id', player.id)
+
+  if (error) {
+    alert(error.message)
+    return
+  }
+
+  alert(
+    `Temporary password for ${player.name} is:\n\n${tempPassword}\n\nSend this to them and ask them to change it after logging in.`
+  )
+}
 async function deletePlayer(playerId) {
   if (!isAdmin) return
   alert('Delete function started for ' + playerId)
@@ -885,9 +914,13 @@ Administrator: timcoker100@gmail.com
     }
   }}
 />
-    <button onClick={() => deletePlayer(player.id)}>
-      Delete
-    </button>
+    <button onClick={() => resetPlayerPassword(player)}>
+  Reset Password
+</button>
+
+<button onClick={() => deletePlayer(player.id)}>
+  Delete
+</button>
   </td>
 )}
             </tr>
