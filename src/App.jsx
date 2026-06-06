@@ -20,6 +20,7 @@ const [page, setPage] = useState('login')
 const [phone, setPhone] = useState('')
 const [whatsapp, setWhatsapp] = useState('')
 const [showEmail, setShowEmail] = useState(true)
+const [receiveWeeklyEmails, setReceiveWeeklyEmails] = useState(true)
 const [showPhone, setShowPhone] = useState(true)
 const [showWhatsapp, setShowWhatsapp] = useState(true)
 const [password, setPassword] = useState('')
@@ -136,6 +137,7 @@ async function recalculatePlayerStats() {
         show_email: showEmail,
         show_phone: showPhone,
         show_whatsapp: showWhatsapp,
+        receive_weekly_emails: receiveWeeklyEmails,
         played: 0,
         won: 0,
         lost: 0,
@@ -383,6 +385,68 @@ async function resetPlayerPassword(player) {
     `Temporary password for ${player.name} is:\n\n${tempPassword}\n\nSend this to them and ask them to change it after logging in.`
   )
 }
+async function sendWeeklyLadderReport() {
+  if (!isAdmin) return
+
+  const recipients = players.filter(
+    (p) => p.receive_weekly_emails && p.email
+  )
+
+  if (recipients.length === 0) {
+    alert('No players are currently opted in to weekly ladder emails.')
+    return
+  }
+
+  const activePlayers = [...players]
+    .filter((p) => Number(p.played) > 0)
+    .sort((a, b) => Number(b.points) - Number(a.points))
+
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+  const recentMatches = matches.filter(
+    (m) => new Date(m.created_at) >= sevenDaysAgo
+  )
+
+  const ladderText = activePlayers
+    .map((p, index) => `${index + 1}. ${p.name} - ${p.points} points`)
+    .join('\n')
+
+  const matchText = recentMatches.length
+    ? recentMatches
+        .map((m) => {
+          const playerA = players.find((p) => p.id === m.player_a)
+          const playerB = players.find((p) => p.id === m.player_b)
+          return `${playerA?.name || 'Unknown'} played ${playerB?.name || 'Unknown'}`
+        })
+        .join('\n')
+    : 'No matches were recorded in the last 7 days.'
+
+  const body = `
+Napton & Priors Marston Singles Tennis Ladder - Weekly Update
+
+CURRENT LADDER
+
+${ladderText || 'No players have played a match yet.'}
+
+Players with no matches played are not shown.
+
+MATCHES PLAYED THIS WEEK
+
+${matchText}
+
+View the full ladder at:
+https://www.naptontennisladder.co.uk
+
+You are receiving this email because you opted in to weekly ladder reports.
+
+To stop receiving these emails, log into the ladder,
+go to Player Contacts and untick
+"Receive Weekly Ladder Reports".
+`
+
+  alert(body)
+}
 async function deletePlayer(playerId) {
   if (!isAdmin) return
   alert('Delete function started for ' + playerId)
@@ -431,6 +495,7 @@ async function updateMyDetails() {
       show_email: showEmail,
       show_phone: showPhone,
       show_whatsapp: showWhatsapp,
+      receive_weekly_emails: receiveWeeklyEmails,
       password,
     })
     .eq('id', loggedInPlayer.id)
@@ -759,7 +824,16 @@ Administrator: timcoker100@gmail.com
   />
   <span>I consent to my email address being visible to other registered players.</span>
 </div>
-
+<div className="consent-row">
+  <input
+    type="checkbox"
+    checked={receiveWeeklyEmails}
+    onChange={(e) => setReceiveWeeklyEmails(e.target.checked)}
+  />
+  <span>
+    Receive Weekly Ladder Reports by Email.
+  </span>
+</div>
 <button className="register-button" onClick={addPlayer}>
   Register
 </button>
@@ -811,7 +885,9 @@ Administrator: timcoker100@gmail.com
       <p>Total players: {players.length}</p>
 
       <p>Total matches: {matches.length}</p>
-
+<button onClick={sendWeeklyLadderReport}>
+  Preview Weekly Ladder Email
+</button>
       <p>
         Admin can delete players using the Delete buttons in the ladder table.
       </p>
@@ -1046,6 +1122,17 @@ Administrator: timcoker100@gmail.com
       />
       <span>Share my WhatsApp number with registered players</span>
     </div>
+
+<div className="consent-row">
+  <input
+    type="checkbox"
+    checked={receiveWeeklyEmails}
+    onChange={(e) => setReceiveWeeklyEmails(e.target.checked)}
+  />
+  <span>
+    Receive Weekly Ladder Reports by Email.
+  </span>
+</div>
 
     <button onClick={updateMyDetails}>
       Update My Details
