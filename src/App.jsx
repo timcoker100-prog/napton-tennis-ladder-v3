@@ -27,6 +27,7 @@ const [password, setPassword] = useState('')
 const [loginPassword, setLoginPassword] = useState('')
 const [resetEmail, setResetEmail] = useState('')
 const [selectedPlayersToDelete, setSelectedPlayersToDelete] = useState([])
+const [isSubmittingMatch, setIsSubmittingMatch] = useState(false)
   
 
   async function loadPlayers() {
@@ -201,6 +202,8 @@ if (!loginPassword.trim()) {
 
 
   async function submitMatch() {
+    setIsSubmittingMatch(true)
+    try {
     if (!loggedInPlayer) {
   alert('You must be logged in to submit a match result.')
   return
@@ -333,6 +336,9 @@ try {
 }
 
 setPage('ladder')
+    } finally {
+      setIsSubmittingMatch(false)
+    }
 }
 async function deleteMatch(matchId) {
   if (!isAdmin) return
@@ -933,7 +939,9 @@ Administrator: timcoker100@gmail.com
 
         <input value={player2Score} onChange={(e) => setPlayer2Score(e.target.value)} placeholder="Player 2 score" />
 
-        <button onClick={submitMatch}>Submit Match</button>
+        <button onClick={submitMatch} disabled={isSubmittingMatch}>
+          {isSubmittingMatch ? 'Submitting...' : 'Submit Match'}
+        </button>
       </div>
     
 )}
